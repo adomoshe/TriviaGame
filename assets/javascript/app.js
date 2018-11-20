@@ -6,20 +6,21 @@ $(window).ready(function () {
         "What kills more people yearly than shark attacks?", "Under the Code of Hammurabi (Babylonian code of law in ancient Mesopotamia) bartenders that watered down beer were..."];
     // Answers array
     var answers = [
-        [1, "364", "420", "Just bite it", "A lot!"],
-        [3, "2%", "Where does strawberry milk come from then?", "7%", "It doesn't?", "I don't drink milk", "14%"],
-        [2, "Dylan Bob", "Robert Zimmerman", "Jokerman"],
-        [1, "Zombie Prepardness", "Sex Addiction"],
-        [4, "Guests", "Customers", "Fans", "Heavy Users"],
-        [4, "Vending machines", "Selfies", "Coconuts", "All of the above"],
-        [1, "Punished by execution", "Fined", "When was beer even invented?", "Mesopowhaaat?", "Doesn't matter, I'll take 4!"]
+        ["1", "364", "420", "Just bite it", "A lot!"],
+        ["3", "2%", "Where does strawberry milk come from then?", "7%", "It doesn't?", "I don't drink milk", "14%"],
+        ["2", "Dylan Bob", "Robert Zimmerman", "Jokerman"],
+        ["1", "Zombie Prepardness", "Sex Addiction"],
+        ["4", "Guests", "Customers", "Fans", "Heavy Users"],
+        ["4", "Vending machines", "Selfies", "Coconuts", "All of the above"],
+        ["1", "Punished by execution", "Fined", "When was beer even invented?", "Mesopowhaaat?", "Doesn't matter, I'll take 4!"]
     ];
     // Seconds to be used for timer
     var seconds = 30;
-    // Var binding timer to setInterval to prevent speeding up caused by multiple instances
-    var timer;
+    // Var binding timer to   val to prevent speeding up caused by multiple instances
+    var timer,
+        timer2;
     // Keep track of times played so it won't exceed number of questions
-    var timesPlayed = 0;
+    var timesPlayed = -1;
     // Keeps track of right and wrong answers
     var right = 0;
     var wrong = 0;
@@ -29,34 +30,38 @@ $(window).ready(function () {
     // When button is clicked startGame function is fired off
     $("#startGame").on("click", startGame);
 
-    // Allows game to start if not all questions have been shown yet, then +1 to timesPlayed, empties previous buttons, renders new questions and answers,
+    // Adds 1 to timesPlayed, empties previous buttons, renders new questions and answers,
     // runs checkAnswer function when any button is clicked, invokes run function.
     // If all questions have been displayed else statement invokes gameOver function.
     function startGame() {
         console.log("timesPlayed: " + timesPlayed);
-        console.log("qlength: " + questions.length)
-        if (timesPlayed < questions.length - 1) {
-            timesPlayed++;
+        console.log("qlength: " + questions.length);
+        $("#timer").text("Time left: " + seconds);
+        clearInterval(timer2);
+        timesPlayed++;
+        if (timesPlayed < questions.length) {
             $("#answersInsert").empty();
-            renderQuestion(questions[timesPlayed]);
-            renderAnswers(answers[timesPlayed]);
-            $(".btn").on("click", checkAnswer);
+            renderQA(questions[timesPlayed], answers[timesPlayed]);
             run();
-        } else {
+        } if (timesPlayed === questions.length) {
             gameOver();
         }
     }
 
     // checkAnswer checks if the id of the button which has been dynamically inputted with the index in which it was entered is the same as the same as the 0 index of that answer array
     // which is the correct answer. If it matches right++ if not then wrong++. Then invokes clearTimer and startGame functions.
+    $(document).on("click", ".movieBtn", checkAnswer);
     function checkAnswer() {
+        console.log("event.target.id: " + event.target.id);
+            console.log("answers[timesPlayed][0]: " + answers[timesPlayed][0]);
+            clearTimer();
         if (event.target.id == answers[timesPlayed][0]) {
             right++;
+            shortTimer(true);
         } else {
             wrong++;
+            shortTimer(false);
         }
-        clearTimer();
-        startGame();
     }
 
     // run clearInterval then setInterval to prevent multiple instances and sets the timerFun as the reoccuring function every second.
@@ -71,11 +76,10 @@ $(window).ready(function () {
         $("#timer").text("Time left: " + seconds);
         if (seconds === 0) {
             wrong++;
-            $("#answersInsert").empty();
             clearTimer();
-            startGame();
-        }
-    }
+            shortTimer(false);
+        };
+    };
 
     // clearTimer uses clearInterval on timer then resets seconds to 30 and updates the html.
     function clearTimer() {
@@ -84,30 +88,52 @@ $(window).ready(function () {
         $("#timer").text("Time left: " + seconds);
     }
 
-    // function runThreeSec() {
-    //     setInterval(function (){
-    //         $("#questionInsert").text("Time's Up! Next Question...");
-    //     }, 1000);
-    //     startGame ();
-    // };
+    // shortTimer gets called whenever a movieBtn is pressed or timerFunc reaches 0.
+    // It resets the text in #timer and calls the startGame function after 3 seconds.
+    // Meanwhile it displays a correct or wrong message on the screen.
+    function shortTimer(boolean) {
+        $("#answersInsert").empty();
+        $("#timer").text("Timer");
+        timer2 = setInterval(startGame, 3000);
+        if (boolean === true) {
+            $("#questionInsert").text("Correct!");
+        };
+        if (boolean === false) {
+            $("#questionInsert").text("Better luck next time!");
+        };
+    };
 
     // renderQuestions pushes the next question to the html
-    function renderQuestion(question) {
-        $("#questionInsert").text(question);
-    }
-
     // renderAnswers dynamically creates buttons for an array of answers that corresponds to the answer and pushes them to the html.
-    function renderAnswers(answerArr) {
-        var index
-        for (index = 1; index < answerArr.length; index++) {
-            $("#answersInsert").append("<div class='row'><button type='button' id=" + index + " class='btn btn-outline-primary btn-lg'>" + answerArr[index] + "</button></div>");
+    function renderQA(question, answer) {
+        $("#questionInsert").text(question);
+        for (var index = 1; index < answer.length; index++) {
+            $("#answersInsert").append("<div class='row'><button type='button' id=" + (index) + " class='movieBtn btn btn-outline-primary btn-lg'>" + answer[index] + "</button></div>");
+        console.log(index);
         };
     };
 
     // gameOver inserts Thanks for playing text to html, displays right and wrong values and clears the buttons.
     function gameOver() {
-        $("#questionInsert").text("Thanks for playing!");
-        $("#timer").text("Correct: " + right + " Wrong: " + wrong);
+        clearInterval(timer);
+        clearInterval(timer2);
+        $("#timer").text("Thanks for playing!");
+        $("#questionInsert").text("Correct: " + right + " Wrong: " + wrong);
         $("#answersInsert").empty();
+        playAgain ();
     }
+
+    // Creates a playAgain button when it is called from the gameOver function which calls the reset function
+    function playAgain() {
+        $("#answersInsert").append("<div class='row'><button type='button' id='playAgain' class='btn btn-outline-primary btn-lg'>Play Again?</button></div>");
+        $("#playAgain").on("click", reset);
+    };
+
+    // reset function resets all relevant variables and calls the startGame function
+    function reset() {
+            timesPlayed = -1;
+            right = 0;
+            wrong = 0;
+            startGame ();
+    };
 });
